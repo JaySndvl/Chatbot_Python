@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero-panel">
+        <div>
+          <p class="eyebrow">Macro chatbot</p>
+          <h1>{{ app_name }}</h1>
+          <p class="lede">Built to stay on topic: {{ topic_name }}. The assistant retrieves from a curated knowledge base before it answers.</p>
+        </div>
+        <div class="meta-card">
+          <div>
+            <span class="meta-label">Topic</span>
+            <strong>{{ topic_name }}</strong>
+          </div>
+          <div>
+            <span class="meta-label">Sources indexed</span>
+            <strong>{{ document_count }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <h2>Macro chatbot</h2>
+            <p>{{ topic_description }}</p>
+          </div>
+          <span id="provider-badge" class="provider-badge">local</span>
+        </header>
+
+        <div id="chat-log" class="chat-log" aria-live="polite"></div>
+
+        <form id="chat-form" class="composer">
+          <label class="sr-only" for="message">Message</label>
+          <textarea id="message" rows="3" placeholder="Ask a focused question about the topic..." required></textarea>
+          <div class="composer-actions">
+            <button type="submit">Send</button>
+            <button type="button" id="clear-chat" class="secondary">Clear</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      window.appConfig = {
+        topicName: "{{ topic_name }}",
+        topicDescription: "{{ topic_description }}",
+      };
+    </script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
