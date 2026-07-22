@@ -2,13 +2,21 @@ const chatLog = document.getElementById("chat-log");
 const chatForm = document.getElementById("chat-form");
 const messageInput = document.getElementById("message");
 const clearButton = document.getElementById("clear-chat");
-const providerBadge = document.getElementById("provider-badge");
 
 const storageKey = "topic-rag-chat-history";
 let history = loadHistory();
 
 renderHistory();
 scrollToBottom();
+
+messageInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) {
+    return;
+  }
+
+  event.preventDefault();
+  chatForm.requestSubmit();
+});
 
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -34,7 +42,6 @@ chatForm.addEventListener("submit", async (event) => {
     }
 
     const payload = await response.json();
-    providerBadge.textContent = payload.provider;
     appendAssistantReply(payload.answer, payload.sources || []);
     history.push({ role: "assistant", content: payload.answer });
     saveHistory();
@@ -50,7 +57,6 @@ clearButton.addEventListener("click", () => {
   history = [];
   saveHistory();
   chatLog.innerHTML = "";
-  providerBadge.textContent = "local";
   messageInput.focus();
 });
 

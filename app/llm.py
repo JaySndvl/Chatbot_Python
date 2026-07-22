@@ -6,6 +6,8 @@ from typing import Any
 import httpx
 
 from app.config import Settings
+
+
 @dataclass(frozen=True)
 class GenerationResult:
     answer: str
@@ -18,9 +20,18 @@ class BaseGenerator:
 
 
 class LocalFallbackGenerator(BaseGenerator):
-    def generate(self, *, question: str, topic_name: str, topic_description: str, history: list[dict[str, str]]) -> GenerationResult:
+    def generate(
+        self,
+        *,
+        question: str,
+        topic_name: str,
+        topic_description: str,
+        history: list[dict[str, str]],
+        message: str | None = None,
+    ) -> GenerationResult:
         return GenerationResult(
-            answer="The AI provider is not configured. Add your Gemini API settings to .env and restart the server.",
+            answer=message
+            or "The AI provider is temporarily unavailable. Try again in a moment.",
             provider="local",
         )
 
@@ -36,6 +47,7 @@ class OpenAICompatibleGenerator(BaseGenerator):
                 topic_name=topic_name,
                 topic_description=topic_description,
                 history=history,
+                message="The AI provider is not configured. Add your Gemini API settings to .env and restart the server.",
             )
 
         system_prompt = (
@@ -72,12 +84,30 @@ class OpenAICompatibleGenerator(BaseGenerator):
                 response.raise_for_status()
                 data = response.json()
                 answer = data["choices"][0]["message"]["content"].strip()
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
+            if status_code in {401, 403}:
+                message = "The AI provider rejected the API key. Check your Gemini credentials in .env."
+            elif status_code == 404:
+                message = "The AI provider endpoint or model could not be found. Check the Gemini model and base URL in .env."
+            elif status_code == 503:
+                message = "The Gemini provider is temporarily unavailable. Try again in a moment."
+            else:
+                message = "The AI provider returned an error. Check your Gemini settings and try again."
+            return LocalFallbackGenerator().generate(
+                question=question,
+                topic_name=topic_name,
+                topic_description=topic_description,
+                history=history,
+                message=message,
+            )
         except Exception:
             return LocalFallbackGenerator().generate(
                 question=question,
                 topic_name=topic_name,
                 topic_description=topic_description,
                 history=history,
+                message="The AI provider could not be reached. Check your Gemini settings and network connection.",
             )
 
         return GenerationResult(answer=answer, provider="openai-compatible")
