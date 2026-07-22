@@ -8,11 +8,9 @@ from pydantic import BaseModel, Field
 
 from app.chat import ChatService
 from app.config import BASE_DIR, get_settings
-from app.rag import TopicRAG
 
 settings = get_settings()
-rag = TopicRAG(settings)
-chat_service = ChatService(settings, rag)
+chat_service = ChatService(settings)
 
 app = FastAPI(title=settings.app_name)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
@@ -38,14 +36,13 @@ def index(request: Request) -> HTMLResponse:
             "app_name": settings.app_name,
             "topic_name": settings.topic_name,
             "topic_description": settings.topic_description,
-            "document_count": rag.document_count(),
         },
     )
 
 
 @app.get("/api/health")
 def health() -> JSONResponse:
-    return JSONResponse({"status": "ok", "documents": rag.document_count()})
+    return JSONResponse({"status": "ok"})
 
 
 @app.post("/api/chat")
@@ -58,13 +55,5 @@ def chat(payload: ChatRequest) -> JSONResponse:
         {
             "answer": reply.answer,
             "provider": reply.provider,
-            "sources": [
-                {
-                    "source": item.source,
-                    "snippet": item.snippet,
-                    "score": round(item.score, 4),
-                }
-                for item in reply.sources
-            ],
         }
     )

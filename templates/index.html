@@ -15,16 +15,12 @@
         <div>
           <p class="eyebrow">Macro chatbot</p>
           <h1>{{ app_name }}</h1>
-          <p class="lede">Built to stay on topic: {{ topic_name }}. The assistant retrieves from a curated knowledge base before it answers.</p>
+          <p class="lede">Built to stay on topic: {{ topic_name }}. The assistant answers using Gemini while filtering out unrelated questions.</p>
         </div>
         <div class="meta-card">
           <div>
             <span class="meta-label">Topic</span>
             <strong>{{ topic_name }}</strong>
-          </div>
-          <div>
-            <span class="meta-label">Sources indexed</span>
-            <strong>{{ document_count }}</strong>
           </div>
         </div>
       </section>

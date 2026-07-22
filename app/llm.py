@@ -6,9 +6,6 @@ from typing import Any
 import httpx
 
 from app.config import Settings
-from app.rag import RetrievalResult
-
-
 @dataclass(frozen=True)
 class GenerationResult:
     answer: str
@@ -16,60 +13,44 @@ class GenerationResult:
 
 
 class BaseGenerator:
-    def generate(self, *, question: str, topic_name: str, topic_description: str, context: list[RetrievalResult], history: list[dict[str, str]]) -> GenerationResult:
+    def generate(self, *, question: str, topic_name: str, topic_description: str, history: list[dict[str, str]]) -> GenerationResult:
         raise NotImplementedError
 
 
 class LocalFallbackGenerator(BaseGenerator):
-    def generate(self, *, question: str, topic_name: str, topic_description: str, context: list[RetrievalResult], history: list[dict[str, str]]) -> GenerationResult:
-        if context:
-            source_lines = [f"- {item.source}: {item.snippet}" for item in context[:3]]
-            context_block = "\n".join(source_lines)
-            answer = (
-                f"I answered this from the {topic_name} knowledge base.\n\n"
-                f"Topic focus: {topic_description}\n\n"
-                f"Relevant material:\n{context_block}\n\n"
-                f"Suggested next step: refine the question or add more source material if you want a narrower answer."
-            )
-        else:
-            answer = (
-                f"I could not find supporting material in the {topic_name} knowledge base. "
-                f"Add more topic-specific documents to improve retrieval."
-            )
-        return GenerationResult(answer=answer, provider="local")
+    def generate(self, *, question: str, topic_name: str, topic_description: str, history: list[dict[str, str]]) -> GenerationResult:
+        return GenerationResult(
+            answer="The AI provider is not configured. Add your Gemini API settings to .env and restart the server.",
+            provider="local",
+        )
 
 
 class OpenAICompatibleGenerator(BaseGenerator):
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def generate(self, *, question: str, topic_name: str, topic_description: str, context: list[RetrievalResult], history: list[dict[str, str]]) -> GenerationResult:
+    def generate(self, *, question: str, topic_name: str, topic_description: str, history: list[dict[str, str]]) -> GenerationResult:
         if not self.settings.llm_model or not self.settings.llm_api_key or not self.settings.llm_base_url:
             return LocalFallbackGenerator().generate(
                 question=question,
                 topic_name=topic_name,
                 topic_description=topic_description,
-                context=context,
                 history=history,
             )
 
         system_prompt = (
             f"You are a helpful assistant focused on {topic_name}. "
             f"Stay within this scope: {topic_description}. "
-            "Use the supplied retrieved context and never invent facts outside it."
-        )
-        context_text = "\n\n".join(
-            f"Source: {item.source}\nExcerpt: {item.snippet}" for item in context
+            "Answer using your general knowledge, but only within this scope. "
+            "If a request is outside this scope, reply exactly: "
+            "'That topic is not covered by this chatbot.'"
         )
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": system_prompt},
             *history,
             {
                 "role": "user",
-                "content": (
-                    f"Question: {question}\n\n"
-                    f"Retrieved context:\n{context_text if context_text else 'No relevant context was retrieved.'}"
-                ),
+                "content": question,
             },
         ]
 
@@ -96,7 +77,6 @@ class OpenAICompatibleGenerator(BaseGenerator):
                 question=question,
                 topic_name=topic_name,
                 topic_description=topic_description,
-                context=context,
                 history=history,
             )
 

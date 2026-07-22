@@ -1,14 +1,12 @@
-# Topic Placeholder
+# Basic Macro Reference
 
-This folder should contain the documents that define the one topic your chatbot is allowed to focus on.
+Protein provides 4 calories per gram.
+Carbohydrates provide 4 calories per gram.
+Fat provides 9 calories per gram.
 
-## How to use this sample
+Total calories can be estimated as:
+(protein grams × 4) + (carbohydrate grams × 4) + (fat grams × 9)
 
-Replace this file with your own internal guides, product notes, policies, or reference material. The RAG pipeline will retrieve passages from everything in this folder and use them as the grounded context for answers.
-
-## What makes a good topic corpus
-
-- Keep the documents tightly related to one domain.
-- Prefer concise, factual text over broad marketing language.
-- Split large subjects into a curated subset of documents rather than indexing an entire general-purpose knowledge base.
-- Update the corpus whenever the target topic changes.
+Example:
+A meal with 30g protein, 50g carbohydrates, and 20g fat contains:
+(30 × 4) + (50 × 4) + (20 × 9) = 500 calories.
